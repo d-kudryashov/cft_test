@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -17,9 +18,9 @@ public class Project {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id;
 
-    @Column
+    @Column(nullable = false)
     private String name;
 
     @Column
@@ -30,4 +31,7 @@ public class Project {
 
     @Column
     private ZonedDateTime dateLastModified;
+
+    @OneToMany
+    private List<Task> tasks;
 }
