@@ -18,19 +18,19 @@ public class Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     private Project project;
 
-    @Column
+    @Column(nullable = false)
     private String name;
 
     @Column
     private String description;
 
     @Column
-    private short priority;
+    private Short priority;
 
     @Column
     private ZonedDateTime dateCreated;
