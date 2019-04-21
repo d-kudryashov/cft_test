@@ -32,6 +32,6 @@ public class Project {
     @Column
     private ZonedDateTime dateLastModified;
 
-    @OneToMany
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Task> tasks;
 }

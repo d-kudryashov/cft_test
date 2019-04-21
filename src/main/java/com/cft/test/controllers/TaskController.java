@@ -2,6 +2,7 @@ package com.cft.test.controllers;
 
 import com.cft.test.entities.Task;
 import com.cft.test.repositories.TaskRepository;
+import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +17,12 @@ import java.util.Objects;
 public class TaskController {
 
     private final TaskRepository taskRepository;
+    private final TaskService taskService;
 
     @Autowired
-    public TaskController(TaskRepository taskRepository) {
+    public TaskController(TaskRepository taskRepository, TaskService taskService) {
         this.taskRepository = taskRepository;
+        this.taskService = taskService;
     }
 
     @GetMapping("/")
@@ -45,17 +48,7 @@ public class TaskController {
     @PutMapping("/")
     public ResponseEntity<Task> saveTask(Task task) {
         if (Objects.nonNull(task) && Objects.nonNull(task.getProject())) {
-            if (Objects.nonNull(task.getId()) && taskRepository.existsById(task.getId()) || Objects.isNull(task.getId())) {
-                Task result = taskRepository.save(task);
-                return ResponseEntity
-                        .status(HttpStatus.OK)
-                        .body(result);
-            }
-            if (Objects.nonNull(task.getId()) && !taskRepository.existsById(task.getId())) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .build();
-            }
+
         }
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)

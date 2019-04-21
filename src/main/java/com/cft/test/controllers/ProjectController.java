@@ -2,8 +2,10 @@ package com.cft.test.controllers;
 
 import com.cft.test.entities.Project;
 import com.cft.test.entities.Task;
+import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.ProjectRepository;
 import com.cft.test.repositories.TaskRepository;
+import com.cft.test.services.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +20,15 @@ import java.util.Objects;
 public class ProjectController {
 
     private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final TaskRepository taskRepository;
 
     @Autowired
-    public ProjectController(ProjectRepository projectRepository, TaskRepository taskRepository) {
+    public ProjectController(ProjectRepository projectRepository,
+                             ProjectService projectService,
+                             TaskRepository taskRepository) {
         this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.taskRepository = taskRepository;
     }
 
@@ -62,13 +68,11 @@ public class ProjectController {
     @PutMapping("/")
     public ResponseEntity<Project> saveProject(@RequestBody Project project) {
         if (Objects.nonNull(project)) {
-            if (Objects.nonNull(project.getId()) && projectRepository.existsById(project.getId()) || Objects.isNull(project.getId())) {
-                Project result = projectRepository.save(project);
+            try {
                 return ResponseEntity
                         .status(HttpStatus.CREATED)
-                        .body(result);
-            }
-            if (Objects.nonNull(project.getId()) && !projectRepository.existsById(project.getId())) {
+                        .body(projectService.saveProject(project));
+            } catch (EntityValidationException e) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .build();
