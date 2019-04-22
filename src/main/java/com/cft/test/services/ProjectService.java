@@ -1,5 +1,6 @@
 package com.cft.test.services;
 
+import com.cft.test.dtos.ProjectDTO;
 import com.cft.test.entities.Project;
 import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.ProjectRepository;
@@ -20,24 +21,24 @@ public class ProjectService {
         this.projectRepository = projectRepository;
     }
 
-    public Project saveProject(Project project) throws EntityValidationException {
-        if (Objects.nonNull(project.getId()) && projectRepository.existsById(project.getId()) || Objects.isNull(project.getId())) {
-            validateProject(project);
-            return projectRepository.save(project);
+    public Project saveProject(ProjectDTO projectDTO) throws EntityValidationException {
+        if (Objects.nonNull(projectDTO.getId()) && projectRepository.existsById(projectDTO.getId()) || Objects.isNull(projectDTO.getId())) {
+            validateProjectData(projectDTO);
+            return projectRepository.save(new Project(projectDTO));
         }
         throw new EntityValidationException();
     }
 
-    private void validateProject(Project project) {
-        Optional<Project> storedProject = projectRepository.findById(project.getId());
+    private void validateProjectData(ProjectDTO projectDTO) {
+        Optional<Project> storedProject = projectRepository.findById(projectDTO.getId());
         ZonedDateTime currentTime = ZonedDateTime.now();
         if (storedProject.isPresent()) {
             Project projectFromDB = storedProject.get();
-            project.setDateCreated(projectFromDB.getDateCreated());
-            project.setDateLastModified(currentTime);
+            projectDTO.setDateCreated(projectFromDB.getDateCreated());
+            projectDTO.setDateLastModified(currentTime);
         } else {
-            project.setDateCreated(currentTime);
+            projectDTO.setDateCreated(currentTime);
         }
-        project.setDateLastModified(currentTime);
+        projectDTO.setDateLastModified(currentTime);
     }
 }

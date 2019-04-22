@@ -1,5 +1,6 @@
 package com.cft.test.entities;
 
+import com.cft.test.dtos.ProjectDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,4 +35,12 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<Task> tasks;
+
+    public Project(ProjectDTO projectDTO) {
+        this.id = projectDTO.getId();
+        this.name = projectDTO.getName();
+        this.description = projectDTO.getDescription();
+        this.dateCreated = projectDTO.getDateCreated();
+        this.dateLastModified = projectDTO.getDateLastModified();
+    }
 }

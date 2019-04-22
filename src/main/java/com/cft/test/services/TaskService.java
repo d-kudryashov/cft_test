@@ -1,8 +1,11 @@
 package com.cft.test.services;
 
+import com.cft.test.dtos.TaskDTO;
+import com.cft.test.entities.Project;
 import com.cft.test.entities.Task;
 import com.cft.test.enums.TaskStatus;
 import com.cft.test.exceptions.EntityValidationException;
+import com.cft.test.repositories.ProjectRepository;
 import com.cft.test.repositories.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,37 +17,46 @@ import java.util.Optional;
 @Service
 public class TaskService {
 
+    private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository) {
         this.taskRepository = taskRepository;
+        this.projectRepository = projectRepository;
     }
 
-    public Task saveTask(Task task) throws EntityValidationException {
-        if (Objects.nonNull(task.getId()) && taskRepository.existsById(task.getId()) || Objects.isNull(task.getId())) {
-            validateTask(task);
-            return taskRepository.save(task);
+    public Task saveTask(TaskDTO taskDTO) throws EntityValidationException {
+        if (Objects.nonNull(taskDTO.getId()) && taskRepository.existsById(taskDTO.getId()) || Objects.isNull(taskDTO.getId())) {
+            Task taskToDB = validateTask(taskDTO);
+            return taskRepository.save(taskToDB);
         }
         throw new EntityValidationException();
     }
 
-    private void validateTask(Task task) throws EntityValidationException {
-        Optional<Task> storedTask = taskRepository.findById(task.getId());
+    private Task validateTask(TaskDTO taskDTO) throws EntityValidationException {
+        Optional<Task> storedTask = taskRepository.findById(taskDTO.getId());
         ZonedDateTime currentTime = ZonedDateTime.now();
+        taskDTO.setDateLastModified(currentTime);
+        if (taskDTO.getPriority() < 0) {
+            throw new EntityValidationException();
+        }
         if (storedTask.isPresent()) {
             Task taskFromDB = storedTask.get();
             if (taskFromDB.getStatus().equals(TaskStatus.CLOSED)) {
                 throw new EntityValidationException();
             }
-            task.setDateCreated(taskFromDB.getDateCreated());
+            taskDTO.setDateCreated(taskFromDB.getDateCreated());
+            return new Task(taskDTO, taskFromDB.getProject());
         } else {
-            task.setStatus(TaskStatus.NEW);
-            task.setDateCreated(currentTime);
-        }
-        task.setDateLastModified(currentTime);
-        if (task.getPriority() < 0) {
-            throw new EntityValidationException();
+            taskDTO.setStatus(TaskStatus.NEW);
+            taskDTO.setDateCreated(currentTime);
+            Optional<Project> storedProject = projectRepository.findById(taskDTO.getProjectId());
+            if (storedProject.isPresent()) {
+                return new Task(taskDTO, storedProject.get());
+            } else {
+                throw new EntityValidationException();
+            }
         }
     }
 }

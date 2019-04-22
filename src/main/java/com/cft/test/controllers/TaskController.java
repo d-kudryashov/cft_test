@@ -1,6 +1,7 @@
 package com.cft.test.controllers;
 
-import com.cft.test.entities.Task;
+import com.cft.test.dtos.TaskDTO;
+import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.TaskRepository;
 import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,9 @@ public class TaskController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<Task>> getTasks() {
-        List<Task> tasks = new ArrayList<>();
-        taskRepository.findAll().forEach(tasks::add);
+    public ResponseEntity<List<TaskDTO>> getTasks() {
+        List<TaskDTO> tasks = new ArrayList<>();
+        taskRepository.findAll().forEach(task -> tasks.add(new TaskDTO(task)));
         if (tasks.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -40,15 +41,22 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTask(@PathVariable int id) {
+    public ResponseEntity<TaskDTO> getTask(@PathVariable int id) {
         return ResponseEntity
-                .of(taskRepository.findById(id));
+                .of(taskRepository.findById(id).map(TaskDTO::new));
     }
 
     @PutMapping("/")
-    public ResponseEntity<Task> saveTask(Task task) {
-        if (Objects.nonNull(task) && Objects.nonNull(task.getProject())) {
-
+    public ResponseEntity<TaskDTO> saveTask(TaskDTO taskDTO) {
+        if (Objects.nonNull(taskDTO) && Objects.nonNull(taskDTO.getProjectId())) {
+            try {
+                return ResponseEntity
+                        .status(HttpStatus.CREATED)
+                        .body(new TaskDTO(taskService.saveTask(taskDTO)));
+            } catch (EntityValidationException e) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .build();            }
         }
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
