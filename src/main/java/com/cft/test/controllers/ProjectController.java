@@ -1,7 +1,7 @@
 package com.cft.test.controllers;
 
-import com.cft.test.entities.Project;
-import com.cft.test.entities.Task;
+import com.cft.test.dtos.ProjectDTO;
+import com.cft.test.dtos.TaskDTO;
 import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.ProjectRepository;
 import com.cft.test.repositories.TaskRepository;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/projects")
@@ -33,9 +34,9 @@ public class ProjectController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<Project>> getProjects() {
-        List<Project> projects = new ArrayList<>();
-        projectRepository.findAll().forEach(projects::add);
+    public ResponseEntity<List<ProjectDTO>> getProjects() {
+        List<ProjectDTO> projects = new ArrayList<>();
+        projectRepository.findAll().forEach(project -> projects.add(new ProjectDTO(project)));
         if (projects.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -47,14 +48,17 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Project> getProject(@PathVariable int id) {
+    public ResponseEntity<ProjectDTO> getProject(@PathVariable int id) {
         return ResponseEntity
-                .of(projectRepository.findById(id));
+                .of(projectRepository.findDtoById(id).map(ProjectDTO::new));
     }
 
     @GetMapping("/{id}/tasks")
-    public ResponseEntity<List<Task>> getTasksByProjectId(@PathVariable int id) {
-        List<Task> tasks = taskRepository.findAllByProjectId(id);
+    public ResponseEntity<List<TaskDTO>> getTasksByProjectId(@PathVariable int id) {
+        List<TaskDTO> tasks = taskRepository.findAllByProjectId(id)
+                                                        .stream()
+                                                        .map(TaskDTO::new)
+                                                        .collect(Collectors.toList());
         if (tasks.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -66,12 +70,12 @@ public class ProjectController {
     }
 
     @PutMapping("/")
-    public ResponseEntity<Project> saveProject(@RequestBody Project project) {
-        if (Objects.nonNull(project)) {
+    public ResponseEntity<ProjectDTO> saveProject(@RequestBody ProjectDTO projectDTO) {
+        if (Objects.nonNull(projectDTO)) {
             try {
                 return ResponseEntity
                         .status(HttpStatus.CREATED)
-                        .body(projectService.saveProject(project));
+                        .body(new ProjectDTO(projectService.saveProject(projectDTO)));
             } catch (EntityValidationException e) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
