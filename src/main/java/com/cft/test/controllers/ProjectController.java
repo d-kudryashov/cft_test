@@ -7,6 +7,7 @@ import com.cft.test.repositories.ProjectRepository;
 import com.cft.test.repositories.TaskRepository;
 import com.cft.test.services.ProjectService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,10 +34,11 @@ public class ProjectController {
         this.taskRepository = taskRepository;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<ProjectDTO>> getProjects() {
+    @GetMapping(value = "/", params = {"page", "size"})
+    public ResponseEntity<List<ProjectDTO>> getProjects(@RequestParam("page") int page, @RequestParam("size") int size) {
         List<ProjectDTO> projects = new ArrayList<>();
-        projectRepository.findAll().forEach(project -> projects.add(new ProjectDTO(project)));
+        PageRequest pageRequest = PageRequest.of(page, size);
+        projectRepository.findAll(pageRequest).forEach(project -> projects.add(new ProjectDTO(project)));
         if (projects.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -50,12 +52,13 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDTO> getProject(@PathVariable int id) {
         return ResponseEntity
-                .of(projectRepository.findDtoById(id).map(ProjectDTO::new));
+                .of(projectRepository.findById(id).map(ProjectDTO::new));
     }
 
-    @GetMapping("/{id}/tasks")
-    public ResponseEntity<List<TaskDTO>> getTasksByProjectId(@PathVariable int id) {
-        List<TaskDTO> tasks = taskRepository.findAllByProjectId(id)
+    @GetMapping(value = "/{id}/tasks", params = {"page", "size"})
+    public ResponseEntity<List<TaskDTO>> getTasksByProjectId(@PathVariable int id, @RequestParam("page") int page, @RequestParam("size") int size) {
+        PageRequest request = PageRequest.of(page, size);
+        List<TaskDTO> tasks = taskRepository.findAllByProjectId(id, request)
                                                         .stream()
                                                         .map(TaskDTO::new)
                                                         .collect(Collectors.toList());

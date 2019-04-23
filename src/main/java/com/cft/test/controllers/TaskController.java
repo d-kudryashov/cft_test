@@ -5,6 +5,7 @@ import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.TaskRepository;
 import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +27,11 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<TaskDTO>> getTasks() {
+    @GetMapping(value = "/", params = {"page", "size"})
+    public ResponseEntity<List<TaskDTO>> getTasks(@RequestParam("page") int page, @RequestParam("size") int size) {
         List<TaskDTO> tasks = new ArrayList<>();
-        taskRepository.findAll().forEach(task -> tasks.add(new TaskDTO(task)));
+        PageRequest pageRequest = PageRequest.of(page, size);
+        taskRepository.findAll(pageRequest).forEach(task -> tasks.add(new TaskDTO(task)));
         if (tasks.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
