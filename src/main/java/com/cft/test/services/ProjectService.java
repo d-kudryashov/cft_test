@@ -5,11 +5,16 @@ import com.cft.test.entities.Project;
 import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -21,6 +26,7 @@ public class ProjectService {
         this.projectRepository = projectRepository;
     }
 
+    @Transactional
     public Project saveProject(ProjectDTO projectDTO) throws EntityValidationException {
         if (Objects.nonNull(projectDTO.getId()) && projectRepository.existsById(projectDTO.getId()) || Objects.isNull(projectDTO.getId())) {
             validateProjectData(projectDTO);
@@ -40,5 +46,12 @@ public class ProjectService {
             projectDTO.setDateCreated(currentTime);
         }
         projectDTO.setDateLastModified(currentTime);
+    }
+
+    public Page<ProjectDTO> getProjects(Pageable pageRequest) {
+        Page<Project> projectPage = projectRepository.findAll(pageRequest);
+        return new PageImpl<>(projectPage.getContent().stream()
+                .map(ProjectDTO::new)
+                .collect(Collectors.toList()), pageRequest, projectPage.getTotalElements());
     }
 }

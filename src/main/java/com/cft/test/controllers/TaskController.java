@@ -5,13 +5,13 @@ import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.TaskRepository;
 import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -28,10 +28,11 @@ public class TaskController {
     }
 
     @GetMapping(value = "/", params = {"page", "size"})
-    public ResponseEntity<List<TaskDTO>> getTasks(@RequestParam("page") int page, @RequestParam("size") int size) {
-        List<TaskDTO> tasks = new ArrayList<>();
-        PageRequest pageRequest = PageRequest.of(page, size);
-        taskRepository.findAll(pageRequest).forEach(task -> tasks.add(new TaskDTO(task)));
+    public ResponseEntity<Page<TaskDTO>> getTasks(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
+                                                  @RequestParam(value = "size", required = false, defaultValue = "0") int size) {
+        size = validateSize(size);
+        Pageable pageRequest = PageRequest.of(page, size);
+        Page<TaskDTO> tasks = taskService.getTasks(pageRequest);
         if (tasks.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -76,5 +77,12 @@ public class TaskController {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .build();
+    }
+
+    private int validateSize(int size) {
+        if (size > 20 || size < 0) {
+            return 20;
+        }
+        return size;
     }
 }
