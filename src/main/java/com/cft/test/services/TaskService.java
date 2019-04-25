@@ -8,11 +8,16 @@ import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.repositories.ProjectRepository;
 import com.cft.test.repositories.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -26,6 +31,7 @@ public class TaskService {
         this.projectRepository = projectRepository;
     }
 
+    @Transactional
     public Task saveTask(TaskDTO taskDTO) throws EntityValidationException {
         if (Objects.nonNull(taskDTO.getId()) && taskRepository.existsById(taskDTO.getId()) || Objects.isNull(taskDTO.getId())) {
             Task taskToDB = validateTask(taskDTO);
@@ -58,5 +64,19 @@ public class TaskService {
                 throw new EntityValidationException();
             }
         }
+    }
+
+    public Page<TaskDTO> getTasksByProjectId(Pageable pageRequest, int projectId) {
+        Page<Task> taskPage = taskRepository.findAllByProjectId(projectId, pageRequest);
+        return new PageImpl<>(taskPage.getContent().stream()
+                .map(TaskDTO::new)
+                .collect(Collectors.toList()), pageRequest, taskPage.getTotalElements());
+    }
+
+    public Page<TaskDTO> getTasks(Pageable pageRequest) {
+        Page<Task> taskPage = taskRepository.findAll(pageRequest);
+        return new PageImpl<>(taskPage.getContent().stream()
+                .map(TaskDTO::new)
+                .collect(Collectors.toList()), pageRequest, taskPage.getTotalElements());
     }
 }
