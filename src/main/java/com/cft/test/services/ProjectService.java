@@ -54,9 +54,23 @@ public class ProjectService {
         projectDTO.setDateLastModified(currentTime);
     }
 
+    public Optional<ProjectDTO> getProjectById(int id) {
+        return projectRepository
+                .findById(id)
+                .map(ProjectDTO::new);
+    }
+
+    public boolean deleteProjectById(int id) {
+        if (projectRepository.existsById(id)) {
+            projectRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
     public Page<ProjectDTO> getProjects(ProjectCriteria projectCriteria) {
         Pageable pageRequest = PageRequest.of(projectCriteria.getPage(), projectCriteria.getSize());
-        Specification<Project> specification = generateSpecifitaion(projectCriteria);
+        Specification<Project> specification = generateSpecification(projectCriteria);
 
         Page<Project> projectPage = projectRepository.findAll(specification, pageRequest);
         return new PageImpl<>(projectPage.getContent().stream()
@@ -64,7 +78,7 @@ public class ProjectService {
                 .collect(Collectors.toList()), pageRequest, projectPage.getTotalElements());
     }
 
-    private Specification<Project> generateSpecifitaion(ProjectCriteria projectCriteria) {
+    private Specification<Project> generateSpecification(ProjectCriteria projectCriteria) {
         Specification<Project> specification = Specification.not(null);
 
         if (Objects.nonNull(projectCriteria.getLastModifiedFrom())) {

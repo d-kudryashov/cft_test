@@ -4,7 +4,6 @@ import com.cft.test.controllers.criterias.TaskCriteria;
 import com.cft.test.dtos.TaskDTO;
 import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.exceptions.RequestValidationException;
-import com.cft.test.repositories.TaskRepository;
 import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,12 +17,10 @@ import java.util.Objects;
 @RequestMapping("/tasks")
 public class TaskController {
 
-    private final TaskRepository taskRepository;
     private final TaskService taskService;
 
     @Autowired
-    public TaskController(TaskRepository taskRepository, TaskService taskService) {
-        this.taskRepository = taskRepository;
+    public TaskController(TaskService taskService) {
         this.taskService = taskService;
     }
 
@@ -50,7 +47,7 @@ public class TaskController {
     @GetMapping("/{id}")
     public ResponseEntity<TaskDTO> getTask(@PathVariable int id) {
         return ResponseEntity
-                .of(taskRepository.findById(id).map(TaskDTO::new));
+                .of(taskService.getTaskById(id));
     }
 
     @PutMapping("/")
@@ -73,8 +70,7 @@ public class TaskController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteTask(@PathVariable int id) {
-        if (taskRepository.existsById(id)) {
-            taskRepository.deleteById(id);
+        if (taskService.deleteTaskById(id)) {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .build();
