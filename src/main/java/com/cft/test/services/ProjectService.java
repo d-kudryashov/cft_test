@@ -1,5 +1,6 @@
 package com.cft.test.services;
 
+import com.cft.test.controllers.criterias.ProjectCriteria;
 import com.cft.test.dtos.ProjectDTO;
 import com.cft.test.entities.Project;
 import com.cft.test.exceptions.EntityValidationException;
@@ -7,7 +8,9 @@ import com.cft.test.repositories.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,9 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.cft.test.repositories.specifications.ProjectSpecification.fromLastModifiedDate;
+import static com.cft.test.repositories.specifications.ProjectSpecification.tillLastModifiedDate;
 
 @Service
 public class ProjectService {
@@ -48,10 +54,26 @@ public class ProjectService {
         projectDTO.setDateLastModified(currentTime);
     }
 
-    public Page<ProjectDTO> getProjects(Pageable pageRequest) {
-        Page<Project> projectPage = projectRepository.findAll(pageRequest);
+    public Page<ProjectDTO> getProjects(ProjectCriteria projectCriteria) {
+        Pageable pageRequest = PageRequest.of(projectCriteria.getPage(), projectCriteria.getSize());
+        Specification<Project> specification = generateSpecifitaion(projectCriteria);
+
+        Page<Project> projectPage = projectRepository.findAll(specification, pageRequest);
         return new PageImpl<>(projectPage.getContent().stream()
                 .map(ProjectDTO::new)
                 .collect(Collectors.toList()), pageRequest, projectPage.getTotalElements());
+    }
+
+    private Specification<Project> generateSpecifitaion(ProjectCriteria projectCriteria) {
+        Specification<Project> specification = Specification.not(null);
+
+        if (Objects.nonNull(projectCriteria.getLastModifiedFrom())) {
+            specification.and(fromLastModifiedDate(projectCriteria.getLastModifiedFrom()));
+        }
+        if (Objects.nonNull(projectCriteria.getLastModifiedTo())) {
+            specification.and(tillLastModifiedDate(projectCriteria.getLastModifiedTo()));
+        }
+
+        return specification;
     }
 }
