@@ -1,5 +1,6 @@
 package com.cft.test.services;
 
+import com.cft.test.controllers.criterias.TaskCriteria;
 import com.cft.test.dtos.TaskDTO;
 import com.cft.test.entities.Project;
 import com.cft.test.entities.Task;
@@ -10,7 +11,9 @@ import com.cft.test.repositories.TaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +21,8 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.cft.test.repositories.specifications.TaskSpecification.*;
 
 @Service
 public class TaskService {
@@ -66,17 +71,45 @@ public class TaskService {
         }
     }
 
-    public Page<TaskDTO> getTasksByProjectId(Pageable pageRequest, int projectId) {
-        Page<Task> taskPage = taskRepository.findAllByProjectId(projectId, pageRequest);
+    public Page<TaskDTO> getTasksByProjectId(TaskCriteria taskCriteria, int projectId) {
+        Pageable pageRequest = PageRequest.of(taskCriteria.getPage(), taskCriteria.getSize());
+        Specification<Task> specification = generateSpecification(taskCriteria);
+
+        Page<Task> taskPage = taskRepository.findAllByProjectId(projectId, pageRequest, specification);
         return new PageImpl<>(taskPage.getContent().stream()
                 .map(TaskDTO::new)
                 .collect(Collectors.toList()), pageRequest, taskPage.getTotalElements());
     }
 
-    public Page<TaskDTO> getTasks(Pageable pageRequest) {
-        Page<Task> taskPage = taskRepository.findAll(pageRequest);
+    public Page<TaskDTO> getTasks(TaskCriteria taskCriteria) {
+        Pageable pageRequest = PageRequest.of(taskCriteria.getPage(), taskCriteria.getSize());
+        Specification<Task> specification = generateSpecification(taskCriteria);
+
+        Page<Task> taskPage = taskRepository.findAll(specification, pageRequest);
         return new PageImpl<>(taskPage.getContent().stream()
                 .map(TaskDTO::new)
                 .collect(Collectors.toList()), pageRequest, taskPage.getTotalElements());
+    }
+
+    private Specification<Task> generateSpecification(TaskCriteria taskCriteria) {
+        Specification<Task> specification = Specification.not(null);
+
+        if (Objects.nonNull(taskCriteria.getLastModifiedFrom())) {
+            specification.and(fromLastModifiedDate(taskCriteria.getLastModifiedFrom()));
+        }
+        if (Objects.nonNull(taskCriteria.getLastModifiedTo())) {
+            specification.and(tillLastModifiedDate(taskCriteria.getLastModifiedTo()));
+        }
+        if (Objects.nonNull(taskCriteria.getTaskStatus())) {
+            specification.and(taskStatusIs(taskCriteria.getTaskStatus()));
+        }
+        if (Objects.nonNull(taskCriteria.getPriorityFrom())) {
+            specification.and(priorityHigherThan(taskCriteria.getPriorityFrom()));
+        }
+        if (Objects.nonNull(taskCriteria.getPriorityTo())) {
+            specification.and(priorityLowerThan(taskCriteria.getPriorityTo()));
+        }
+
+        return specification;
     }
 }

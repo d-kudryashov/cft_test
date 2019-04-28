@@ -1,13 +1,13 @@
 package com.cft.test.controllers;
 
+import com.cft.test.controllers.criterias.TaskCriteria;
 import com.cft.test.dtos.TaskDTO;
 import com.cft.test.exceptions.EntityValidationException;
+import com.cft.test.exceptions.RequestValidationException;
 import com.cft.test.repositories.TaskRepository;
 import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,12 +27,16 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @GetMapping(value = "/", params = {"page", "size"})
-    public ResponseEntity<Page<TaskDTO>> getTasks(@RequestParam(value = "page", required = false, defaultValue = "0") int page,
-                                                  @RequestParam(value = "size", required = false, defaultValue = "0") int size) {
-        size = validateSize(size);
-        Pageable pageRequest = PageRequest.of(page, size);
-        Page<TaskDTO> tasks = taskService.getTasks(pageRequest);
+    @GetMapping(value = "/")
+    public ResponseEntity<Page<TaskDTO>> getTasks(TaskCriteria taskCriteria) {
+        try {
+            taskCriteria.validate();
+        } catch (RequestValidationException e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+        Page<TaskDTO> tasks = taskService.getTasks(taskCriteria);
         if (tasks.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -59,7 +63,8 @@ public class TaskController {
             } catch (EntityValidationException e) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
-                        .build();            }
+                        .build();
+            }
         }
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
@@ -77,12 +82,5 @@ public class TaskController {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .build();
-    }
-
-    private int validateSize(int size) {
-        if (size > 20 || size < 0) {
-            return 20;
-        }
-        return size;
     }
 }
