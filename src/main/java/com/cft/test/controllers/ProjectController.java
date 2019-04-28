@@ -6,7 +6,6 @@ import com.cft.test.dtos.ProjectDTO;
 import com.cft.test.dtos.TaskDTO;
 import com.cft.test.exceptions.EntityValidationException;
 import com.cft.test.exceptions.RequestValidationException;
-import com.cft.test.repositories.ProjectRepository;
 import com.cft.test.services.ProjectService;
 import com.cft.test.services.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +20,12 @@ import java.util.Objects;
 @RequestMapping("/projects")
 public class ProjectController {
 
-    private final ProjectRepository projectRepository;
     private final ProjectService projectService;
     private final TaskService taskService;
 
     @Autowired
-    public ProjectController(ProjectRepository projectRepository,
-                             ProjectService projectService,
+    public ProjectController(ProjectService projectService,
                              TaskService taskService) {
-        this.projectRepository = projectRepository;
         this.projectService = projectService;
         this.taskService = taskService;
     }
@@ -57,7 +53,7 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ProjectDTO> getProject(@PathVariable int id) {
         return ResponseEntity
-                .of(projectRepository.findById(id).map(ProjectDTO::new));
+                .of(projectService.getProjectById(id));
     }
 
     @GetMapping(value = "/{id}/tasks")
@@ -100,8 +96,7 @@ public class ProjectController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteProject(@PathVariable int id) {
-        if (projectRepository.existsById(id)) {
-            projectRepository.deleteById(id);
+        if (projectService.deleteProjectById(id)) {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .build();

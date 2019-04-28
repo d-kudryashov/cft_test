@@ -81,6 +81,20 @@ public class TaskService {
                 .collect(Collectors.toList()), pageRequest, taskPage.getTotalElements());
     }
 
+    public Optional<TaskDTO> getTaskById(int id) {
+        return taskRepository
+                .findById(id)
+                .map(TaskDTO::new);
+    }
+
+    public boolean deleteTaskById(int id) {
+        if (taskRepository.existsById(id)) {
+            taskRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
     public Page<TaskDTO> getTasks(TaskCriteria taskCriteria) {
         Pageable pageRequest = PageRequest.of(taskCriteria.getPage(), taskCriteria.getSize());
         Specification<Task> specification = generateSpecification(taskCriteria);
