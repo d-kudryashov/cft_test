@@ -38,7 +38,7 @@ public class TaskService {
 
     @Transactional
     public Task saveTask(TaskDTO taskDTO) throws EntityValidationException {
-        if (Objects.nonNull(taskDTO.getId()) && taskRepository.existsById(taskDTO.getId()) || Objects.isNull(taskDTO.getId())) {
+        if (taskRepository.existsById(taskDTO.getId()) || taskDTO.getId() == 0) {
             Task taskToDB = validateTask(taskDTO);
             return taskRepository.save(taskToDB);
         }
@@ -75,7 +75,9 @@ public class TaskService {
         Pageable pageRequest = PageRequest.of(taskCriteria.getPage(), taskCriteria.getSize());
         Specification<Task> specification = generateSpecification(taskCriteria);
 
-        Page<Task> taskPage = taskRepository.findAllByProjectId(projectId, pageRequest, specification);
+        specification = specification.and(projectIdEqualsTo(projectId));
+
+        Page<Task> taskPage = taskRepository.findAll(specification, pageRequest);
         return new PageImpl<>(taskPage.getContent().stream()
                 .map(TaskDTO::new)
                 .collect(Collectors.toList()), pageRequest, taskPage.getTotalElements());
@@ -109,19 +111,19 @@ public class TaskService {
         Specification<Task> specification = Specification.not(null);
 
         if (Objects.nonNull(taskCriteria.getLastModifiedFrom())) {
-            specification.and(fromLastModifiedDate(taskCriteria.getLastModifiedFrom()));
+            specification = specification.and(fromLastModifiedDate(taskCriteria.getLastModifiedFrom()));
         }
         if (Objects.nonNull(taskCriteria.getLastModifiedTo())) {
-            specification.and(tillLastModifiedDate(taskCriteria.getLastModifiedTo()));
+            specification = specification.and(tillLastModifiedDate(taskCriteria.getLastModifiedTo()));
         }
         if (Objects.nonNull(taskCriteria.getTaskStatus())) {
-            specification.and(taskStatusIs(taskCriteria.getTaskStatus()));
+            specification = specification.and(taskStatusIs(taskCriteria.getTaskStatus()));
         }
         if (Objects.nonNull(taskCriteria.getPriorityFrom())) {
-            specification.and(priorityHigherThan(taskCriteria.getPriorityFrom()));
+            specification = specification.and(priorityHigherThan(taskCriteria.getPriorityFrom()));
         }
         if (Objects.nonNull(taskCriteria.getPriorityTo())) {
-            specification.and(priorityLowerThan(taskCriteria.getPriorityTo()));
+            specification = specification.and(priorityLowerThan(taskCriteria.getPriorityTo()));
         }
 
         return specification;

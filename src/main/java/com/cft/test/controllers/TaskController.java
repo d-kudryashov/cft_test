@@ -25,7 +25,7 @@ public class TaskController {
     }
 
     @GetMapping(value = "/")
-    public ResponseEntity<Page<TaskDTO>> getTasks(TaskCriteria taskCriteria) {
+    public ResponseEntity<Page<TaskDTO>> getTasks(@RequestBody TaskCriteria taskCriteria) {
         try {
             taskCriteria.validate();
         } catch (RequestValidationException e) {
@@ -51,7 +51,7 @@ public class TaskController {
     }
 
     @PutMapping("/")
-    public ResponseEntity<TaskDTO> saveTask(TaskDTO taskDTO) {
+    public ResponseEntity<TaskDTO> saveTask(@RequestBody TaskDTO taskDTO) {
         if (Objects.nonNull(taskDTO) && Objects.nonNull(taskDTO.getProjectId())) {
             try {
                 return ResponseEntity

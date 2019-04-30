@@ -30,4 +30,8 @@ public class TaskSpecification {
     public static Specification<Task> priorityLowerThan(final Short priorityFrom) {
         return (root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get("priority"), priorityFrom);
     }
+
+    public static Specification<Task> projectIdEqualsTo(final int projectId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("project").get("id"), projectId);
+    }
 }
