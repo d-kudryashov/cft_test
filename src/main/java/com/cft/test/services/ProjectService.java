@@ -34,7 +34,7 @@ public class ProjectService {
 
     @Transactional
     public Project saveProject(ProjectDTO projectDTO) throws EntityValidationException {
-        if (Objects.nonNull(projectDTO.getId()) && projectRepository.existsById(projectDTO.getId()) || Objects.isNull(projectDTO.getId())) {
+        if (projectRepository.existsById(projectDTO.getId()) || projectDTO.getId() == 0) {
             validateProjectData(projectDTO);
             return projectRepository.save(new Project(projectDTO));
         }
@@ -82,10 +82,10 @@ public class ProjectService {
         Specification<Project> specification = Specification.not(null);
 
         if (Objects.nonNull(projectCriteria.getLastModifiedFrom())) {
-            specification.and(fromLastModifiedDate(projectCriteria.getLastModifiedFrom()));
+            specification = specification.and(fromLastModifiedDate(projectCriteria.getLastModifiedFrom()));
         }
         if (Objects.nonNull(projectCriteria.getLastModifiedTo())) {
-            specification.and(tillLastModifiedDate(projectCriteria.getLastModifiedTo()));
+            specification = specification.and(tillLastModifiedDate(projectCriteria.getLastModifiedTo()));
         }
 
         return specification;

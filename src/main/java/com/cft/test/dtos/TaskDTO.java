@@ -16,7 +16,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public class TaskDTO {
 
-    private Integer id;
+    private int id;
     private Integer projectId;
     private String name;
     private String description;

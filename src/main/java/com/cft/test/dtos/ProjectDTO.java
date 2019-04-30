@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Getter
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class ProjectDTO {
 
-    private Integer id;
+    private int id;
     private String name;
     private String description;
     private ZonedDateTime dateCreated;
@@ -29,9 +30,11 @@ public class ProjectDTO {
         this.description = project.getDescription();
         this.dateCreated = project.getDateCreated();
         this.dateLastModified = project.getDateLastModified();
-        this.taskDTOList = project.getTasks()
+        this.taskDTOList = Objects.nonNull(project.getTasks())
+                                ? project.getTasks()
                                     .stream()
                                     .map(TaskDTO::new)
-                                    .collect(Collectors.toList());
+                                    .collect(Collectors.toList())
+                                : null;
     }
 }

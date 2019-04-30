@@ -31,7 +31,7 @@ public class ProjectController {
     }
 
     @GetMapping(value = "/")
-    public ResponseEntity<Page<ProjectDTO>> getProjects(ProjectCriteria projectCriteria) {
+    public ResponseEntity<Page<ProjectDTO>> getProjects(@RequestBody ProjectCriteria projectCriteria) {
         try {
             projectCriteria.validate();
         } catch (RequestValidationException e) {
@@ -57,7 +57,7 @@ public class ProjectController {
     }
 
     @GetMapping(value = "/{id}/tasks")
-    public ResponseEntity<Page<TaskDTO>> getTasksByProjectId(@PathVariable int id, TaskCriteria taskCriteria) {
+    public ResponseEntity<Page<TaskDTO>> getTasksByProjectId(@PathVariable int id, @RequestBody TaskCriteria taskCriteria) {
         try {
             taskCriteria.validate();
         } catch (RequestValidationException e) {
